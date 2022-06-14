@@ -1,5 +1,6 @@
 # CIPHER_HASH_RISTRAS_TEST
-Programa de comprobacion de ristras
+Programa de comprobacion de ristras. Se usa con: >frn.py    
+Para añadir funciones o cambiar atributos hay que implementarlo en el código
 
 ## Parametros del codigo:
 - FRN: La variable ficheros_totales indica el frn maximo a utilizar, por defecto se usa 512 (se asume que es de 9 bits)
