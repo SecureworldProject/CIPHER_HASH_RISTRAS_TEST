@@ -2,6 +2,8 @@
 import logging
 import os
 import sys
+import math
+import cifradores
 
 def printProgressBar(iteration, total, prefix='', suffix='', decimals=1, length=100, printEnd = "\r"):
     """
@@ -39,8 +41,22 @@ def cifra_ficheros(lista,total_ficheros, tam, fun_hash):
   '''Ciframos los 512 ficheros cada uno con un frn distinto y sobreescribimos los valores '''
   for frn in range (total_ficheros):
     for i in range (tam):
-      lista_ficheros[frn][i] = fun_hash(lista_ficheros[frn][i], frn, i)
+      lista_ficheros[frn][i] = fun_hash(lista_ficheros[frn][i], frn, i, clave)
     logging.debug(" Fichero %d cifrado: %s", frn, lista_ficheros[frn])
+
+def cifra_ficheros_completo(lista,total_ficheros, tam, fun_hash):
+  '''Ciframos los 512 ficheros cada uno con un frn distinto y sobreescribimos los valores '''
+  for frn in range (total_ficheros):
+    for i in range (tam):
+      lista_ficheros[frn][i] = ((lista_ficheros[frn][i] + fun_hash(lista_ficheros[frn][i], frn, i, clave))%256)
+    logging.debug(" Fichero %d cifrado: %s", frn, lista_ficheros[frn])
+
+def descifra_ficheros_completo(lista,total_ficheros, tam, fun_hash):
+  '''Ciframos los 512 ficheros cada uno con un frn distinto y sobreescribimos los valores '''
+  for frn in range (total_ficheros):
+    for i in range (tam):
+      lista_ficheros[frn][i] = (lista_ficheros[frn][i] - fun_hash(lista_ficheros[frn][i], frn, i)%256)
+    logging.debug(" Fichero %d descifrado: %s", frn, lista_ficheros[frn])
 
 def check_ficheros(lista, total_ficheros, tam):
   '''Comprobamos que no haya 2 ristras iguales'''
@@ -82,7 +98,7 @@ def check_ficheros(lista, total_ficheros, tam):
   logging.info("Ristras unicas/ repetidas = %d/%d", ristras_unicas, ristras_repetidas)
   ristras_unicas_repetidas = "{:d}/{:d}".format(ristras_unicas,ristras_repetidas)
   ristras_generadas = ristras_unicas + ristras_repetidas
-  
+
   # Se incluyen en el diccionario de ristras, las ristras unicas
   for i in lista_ristras_unicas:
     dict_ristras[i] = []
@@ -95,11 +111,15 @@ def check_ficheros(lista, total_ficheros, tam):
 
 def check_ristras_diferentes(lista, dict_ristras, tam):
   global media_diferencias
+  global max_dif
+  global min_dif
   media_diferencias = 0
 
   diferencias = 0
   diferencias_totales = 0
   comparaciones = 0
+  max_dif = 0
+  min_dif = tam + 1
   ristras_unicas = len(dict_ristras)
   lista_ficheros = list(dict_ristras.keys())
   for ristra_act in range(ristras_unicas):
@@ -111,7 +131,12 @@ def check_ristras_diferentes(lista, dict_ristras, tam):
           diferencias_totales+=1
           diferencias += 1
       #logging.info("Comparo las ristras %d y %d = %d diferencias",ristra_act,ristra_next,diferencias)
-      logging.info("Comparo las ristras %d y %d = %d diferencias",lista_ficheros[ristra_act],lista_ficheros[ristra_next],diferencias)
+      if diferencias < tam:
+        logging.info("Comparo las ristras %d y %d = %d diferencias",lista_ficheros[ristra_act],lista_ficheros[ristra_next],diferencias)
+      if diferencias > max_dif:
+        max_dif = diferencias
+      if diferencias < min_dif:
+        min_dif = diferencias
       comparaciones+=1
       #logging.info("Comparaciones: %d",comparaciones)
   if comparaciones ==0:
@@ -120,23 +145,26 @@ def check_ristras_diferentes(lista, dict_ristras, tam):
     media_diferencias = diferencias_totales/comparaciones
 
 
-def cifrado_malo(elem, frn, pos):
-  '''Cifrado de ejemplo que no produce un buen resultado en la mayoria de casos'''
+def cifrado_malo(elem, frn, pos, clave):
+  '''elem = (elem+ pos + clave + frn) % 256'''
   elem = (elem + pos + clave + frn) % 256
   return elem
 
-def cifrado_bueno(elem, frn, pos):
-  '''Cifrado de ejemplo que produce un buen resultado en la mayoria de casos'''
+def cifrado_bueno(elem, frn, pos, clave):
+  '''elem = (elem + (pos^frn + (int)((pos^frn)/256))%256)%256'''
   elem = elem + (pos^frn + (int)((pos^frn)/256))%256
+  #elem = elem + ((pos^frn) + ((pos^frn)//256))
   elem = elem % 256
   return elem
 
-def cifrado_test(elem, frn, pos):
-  ''' En esta funcion puedes probar tu propio hash'''
+def cifrado_test(elem, frn, pos, clave):
+  '''elem = (clave or pos)+(frn or pos)'''
+  elem = (clave or pos)+(frn or pos)
+  elem = elem % 256
   return elem  
 
 if __name__ == "__main__":
-  '''Programa para calcular las ristras generadas
+  """Programa para calcular las ristras generadas
   Parametros del codigo:
     - FRN: La variable ficheros_totales indica el frn maximo a utilizar, por defecto se usa 512 (se asume que es de 9 bits)
     - Tamano de los ficheros: En el array tams_ficheros estan los distintos tamaños que se pueden utilizar, puedes quitar o añadir el que quieras, pero siempre en forma de lista, aunque sea un solo tamano
@@ -150,7 +178,8 @@ if __name__ == "__main__":
     - Ristras generadas: El numero de ristras que se generan
     - Ristras unicas/repetidas: Las ristras generadas pueden se pueden repetir varias veces o ser unicas
     - Media de diferencias: Entre las ristras generadas se calculan las diferencias que hay y se hace la media
-  '''
+    - Formula: El docstring de la función, es muy importante que lo incluyas
+  """
 
   # /////////////Inicializacion del programa
   os.system("cls")
@@ -163,22 +192,34 @@ if __name__ == "__main__":
   option = input("Pulsa 1 para probar todos los cifradores. Para probar solo el de test, pulsa cualquier tecla\n")
   if option == "1":
     funcs_cifrado =[cifrado_bueno, cifrado_malo, cifrado_test]
-  else: # el cifrado mas comun que se pruebe sera con el que haces tests, pero puedes cambiar este cifrado por el que quieras
-    funcs_cifrado=[cifrado_test]
-    funcs_cifrado=[cifrado_bueno]
+  else:
+    if option == "2":
+      funcs_cifrado=[cifradores.ejemplo_estandar, cifradores.ejemplo_dependencia_bit, cifradores.ejemplo_no_lineal, cifradores.ejemplo_no_lineal2, cifradores.ejemplo_mejor]
+    else: # el cifrado mas comun que se pruebe sera con el que haces tests, pero puedes cambiar este cifrado por el que quieras
+      funcs_cifrado=[cifradores.cifrado_test3]
+      #funcs_cifrado=[cifrado_bueno]
+  
+  ''' Para este cifrador en miniatura tenemos:
+  frn de 9 bits en lugar de 32
+  clave de 36 bits en lugar de 128/256
+  pos de 9 bits en lugar de 32
+  '''
 
-  ficheros_totales = 512 #FRN max
+  ficheros_totales = 256 #FRN max
 
   contenido = 0 #Contenido de los ficheros en claro
-  clave = 14 #Clave de cifrado
+  #clave = 0xa45c3f10 #2757508880 = Clave de cifrado
+  clave = 14 
+
+  tams_fichero = [26]
+  resultados = []
+  categorias = ["Cifrador","Tam fichero","Ristras generadas","Ristras unicas/repetidas","Media diferencias(Max/Min)","Formula"]
 
   ristras_generadas = 0
   ristras_unicas_repetidas = "0/0"
   media_diferencias = 0
-
-  tams_fichero = [26, 260]
-  resultados = []
-  categorias = ["Cifrador","Tam fichero","Ristras generadas","Ristras unicas/repetidas","Media diferencias"]
+  max_dif = 0
+  min_dif = 0
 
   # /////////////////Se testea cada cifrador para los distintos tamaños de fichero. Siempre se testean frnmax ficheros
   num_cifrados = len(funcs_cifrado)
@@ -193,7 +234,7 @@ if __name__ == "__main__":
       genera_ficheros(lista_ficheros,ficheros_totales,tam)
       
       printProgressBar(paso_actual+1,pasos_total,prefix="Cifrando ficheros ({:s},{:d})".format(cifrado.__name__,tam), suffix="Completado", length=50, printEnd='\r')
-      cifra_ficheros(lista_ficheros,ficheros_totales,tam,cifrado) # Se mete en cifrado la funcion de hash que estas probando
+      cifra_ficheros_completo(lista_ficheros,ficheros_totales,tam,cifrado) # Se mete en cifrado la funcion de hash que estas probando
       
       printProgressBar(paso_actual+2,pasos_total,prefix="Comprobando ficheros ({:s},{:d})".format(cifrado.__name__,tam), suffix="Completado", length=50, printEnd='\r')
       logging.debug("\n\nPara el cifrador %s, y tam = %d\n=======================================================\n",cifrado.__name__,tam)
@@ -201,7 +242,9 @@ if __name__ == "__main__":
       paso_actual+=3
       if paso_actual == pasos_total:
         printProgressBar(pasos_total,pasos_total,prefix="Finalizando     ({:s},{:d})".format(cifrado.__name__,tam), suffix="Completado", length=50, printEnd='\r')
-      resultados.append([cifrado.__name__,tam, ristras_generadas, ristras_unicas_repetidas ,media_diferencias])
+      media_diferencias_str = "{:.2f}".format(media_diferencias)+"("+str(max_dif)+"/"+str(min_dif)+")"
+      #resultados.append([cifrado.__name__,tam, ristras_generadas, ristras_unicas_repetidas ,media_diferencias,cifrado.__doc__])
+      resultados.append([cifrado.__name__,tam, ristras_generadas, ristras_unicas_repetidas ,media_diferencias_str,cifrado.__doc__])
 
   # ///////////////////Presentacion de resultados
   tabla_format = "{:^30}"*(len(categorias))
