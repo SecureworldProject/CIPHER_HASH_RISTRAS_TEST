@@ -4,6 +4,7 @@ import os
 import sys
 import math
 import cifradores
+import random
 
 def printProgressBar(iteration, total, prefix='', suffix='', decimals=1, length=100, printEnd = "\r"):
     """
@@ -163,6 +164,15 @@ def cifrado_test(elem, frn, pos, clave):
   elem = elem % 256
   return elem  
 
+
+def genera_lista_claves():
+  '''Esta funcion contiene un generador de claves para ahorra en memoria'''
+  a = []
+  for i in range(10):
+    a.append(random.randint(0,(2**64)))
+  return a
+
+
 if __name__ == "__main__":
   """Programa para calcular las ristras generadas
   Parametros del codigo:
@@ -196,8 +206,10 @@ if __name__ == "__main__":
     if option == "2":
       funcs_cifrado=[cifradores.ejemplo_estandar, cifradores.ejemplo_dependencia_bit, cifradores.ejemplo_no_lineal, cifradores.ejemplo_no_lineal2, cifradores.ejemplo_mejor]
     else: # el cifrado mas comun que se pruebe sera con el que haces tests, pero puedes cambiar este cifrado por el que quieras
-      funcs_cifrado=[cifradores.cifrado_test3]
-      #funcs_cifrado=[cifrado_bueno]
+      #funcs_cifrado=[cifradores.hash_uva_no_difusion, cifradores.encryp_Uva_no_confusion]
+      #funcs_cifrado=[cifradores.hash_uva_no_difusion, cifradores.encryp_Uva_no_confusion, cifradores.encryp_Uva, cifradores.encryp_Uva_bin, cifradores.encryp_Nokia, cifradores.encryp_Nokia_monofuncion,cifradores.encryp_Nokia_test]
+      funcs_cifrado=[cifradores.encryp_Nokia_test,cifradores.encryp_Nokia_test_hex, cifradores.encryp_Uva_bin]
+      #funcs_cifrado=[cifradores.encryp_Uva_bin, cifradores.encryp_Uva_fna]
   
   ''' Para este cifrador en miniatura tenemos:
   frn de 9 bits en lugar de 32
@@ -205,13 +217,18 @@ if __name__ == "__main__":
   pos de 9 bits en lugar de 32
   '''
 
-  ficheros_totales = 256 #FRN max
+  ficheros_totales = 512 #FRN max
+  print("Se va a usar una frn de ", ficheros_totales)
 
   contenido = 0 #Contenido de los ficheros en claro
-  #clave = 0xa45c3f10 #2757508880 = Clave de cifrado
-  clave = 14 
+  
+  clave = 14
+  #clave = 145
+  #clave = 145938748374837
+  #clave = 14593874837483793993949982938295397436736873687326473247392489357875483243842648732643433232
+  #clave = 170414 #  0b101001100110101110 18 bits
 
-  tams_fichero = [26]
+  tams_fichero = [2,8]
   resultados = []
   categorias = ["Cifrador","Tam fichero","Ristras generadas","Ristras unicas/repetidas","Media diferencias(Max/Min)","Formula"]
 
