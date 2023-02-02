@@ -167,16 +167,21 @@ def hash_uva_bin (message):
   '''
 
   
-  F= (message[1] ^ message[0]) | (message[2] ^ message[3])
-  G= (F ^ message[4]) | (message[5] ^ message[6])
+  '''F= (message[1] ^ message[0]) | (~(message[2]) ^ message[3])
+  G= (F ^ message[4]) | (message[5] ^ ~(message[6]))
   H= (G ^ message[7] ^ message[8])
-  I = (H ^ (message[9] | message[10]))
-  #I = H
+  I = (H ^ (message[9] | message[10]))'''
+
+  #PARA PROBAR SIN CONFUSION
+  F= message[10] ^ message[9] ^ message[8] ^ message[7] ^ message[6] ^ message[5] ^ message[4] ^ message[3] ^ message[2] ^ message[1] ^ message[0]    
+  F = message[7]
   
 
-  hash = I % 256
+  #hash = I % 256
+  resul = F%256
 
-  return hash
+  #return hash
+  return resul
 
 def encryp_Uva_fna(elem,frn,pos,clave):
   '''Uva Real or bit'''
@@ -605,8 +610,6 @@ def hash_nokia_test_2(message):
   resul = I%256
   return resul
 
-
-
 def encryp_Nokia_test_64(elem,frn,pos,clave):
   '''Nokia Real'''
   #clave = 170414 #  0b101001100110101110 18 bits
@@ -721,9 +724,6 @@ def hash_nokia_test_64(message):
   #resul = message[0]%256
   return resul
 
-
-
-
 def encryp_Nokia_test_mix(elem,frn,pos,clave):
   '''Nokia Real'''
   #cadena_total = bin(frn)[2:]+bin(pos)[2:]+bin(clave)[2:]
@@ -769,6 +769,9 @@ def hash_nokia_test_mix(message):
   return resul
 
 
+####DEFINITIVOS
+
+
 def encryp_Nokia_test_hex(elem,frn,pos,clave):
   '''Nokia Real'''
   #cadena_total = bin(frn)[2:]+bin(pos)[2:]+bin(clave)[2:]
@@ -780,9 +783,10 @@ def encryp_Nokia_test_hex(elem,frn,pos,clave):
     #junto todos sin 0b, y los repito n veces
   cadena_total = cadena_total[0:160]
 
-  #Transformacion lineal
   a = int(cadena_total[0:80],2)
   b = int(cadena_total[81:160],2)
+
+  #Transformacion lineal
   a = a+b
   b = a+(2*b) 
 
@@ -818,11 +822,76 @@ def encryp_Nokia_test_hex(elem,frn,pos,clave):
 
 def hash_nokia_test_hex(message):
   '''Hash nokia_ test'''
+  '''{'Tabla verdad': '1000110000011101', 
+  'Minterminos': "(x1'x2'x3'x4') + (x1'x2x3'x4') + (x1'x2x3'x4) + (x1x2'x3x4) + (x1x2x3'x4') + (x1x2x3'x4) + (x1x2x3x4)", 
+  'FNA': '(1) ^ (x1) ^ (x2) ^ (x1&x2) ^ (x1&x3) ^ (x1&x2&x3) ^ (x4) ^ (x1&x4) ^ (x2&x4) ^ (x3&x4) ^ (x1&x3&x4) ^ (x2&x3&x4) ^ (x1&x2&x3&x4)', 
+  'Equilibrio (1s/0s)': 0.7777777777777778, 
+  'Grado': 4, 'Resiliencia': 1, 'No linealidad': 5}'''
+
+  #F = (0xFF) ^ (message[3]) ^ (message[2]) ^ (message[3]&message[2]) ^ (message[3]&message[1]) ^ (message[3]&message[2]&message[1]) ^ (message[0]) ^ (message[3]&message[0]) ^ (message[2]&message[0]) ^ (message[1]&message[0]) ^ (message[3]&message[1]&message[0]) ^ (message[2]&message[1]&message[0]) ^ (message[3]&message[2]&message[1]&message[0])
 
   #F = '(1) ^ (x1) ^ (x2) ^ (x1&x3) ^ (x2&x3) ^ (x1&x2&x4) ^ (x1&x3&x4) ^ (x2&x3&x4) ^ (x1&x2&x3&x4)
-  #F = (1) ^ (message[3]) ^ (message[2]) ^ (message[3]&message[1]) ^ (message[2]&message[1]) ^ (message[3]&message[2]&message[0]) ^ (message[3]&message[1]&message[0]) ^ (message[2]&message[1]&message[0]) ^ (message[3]&message[2]&message[1]&message[0])
-  F = (0xFF) ^ (message[3]) ^ (message[2]) ^ (message[3]&message[1]) ^ (message[2]&message[1]) ^ (message[3]&message[2]&message[0]) ^ (message[3]&message[1]&message[0]) ^ (message[2]&message[1]&message[0]) ^ (message[3]&message[2]&message[1]&message[0])
-  #F= (message[1] ^ message[0]) | (message[2] ^ message[3])
+  
+  #ESTE ES EL QUE USO
+  #F = (0xFF) ^ (message[3]) ^ (message[2]) ^ (message[3]&message[1]) ^ (message[2]&message[1]) ^ (message[3]&message[2]&message[0]) ^ (message[3]&message[1]&message[0]) ^ (message[2]&message[1]&message[0]) ^ (message[3]&message[2]&message[1]&message[0])
+  #SIN CONFUSIÓN
+  #F= (message[3] ^ message[2] ^ message[1] ^ message[0])
+  F = message[2]
   resul = F%256
   #resul = message[0]%256
+  return resul
+
+
+def encryp_Uva_bin (elem,frn,pos,clave):
+  '''Uva Real or bit'''
+  #Establecer tamaño del mensaje en 11 bytes, tanto si es mayor como si es menor
+  message = str(frn) + str(pos) + str(clave)
+ 
+
+  if len(message) > 33:
+      sep = [message[i:i+33] for i in range(0,len(message), 33)]
+         
+      message=sep[0]
+ 
+      for i in message:
+          message = int(message) ^ int(sep[i])  
+          message = str(message)
+
+  else:
+      while len(message) < 33:
+          dif= 33 - len(message)
+          m= message [0:dif]
+          message= message + m
+      
+  
+  #Formar lista de 11 números (bloques) %256
+  message= [message[i:i+3] for i in range(0,len(message), 3)]
+  message= [int(message[i])%256 for i in range(0,len(message))]
+     
+  elem= (hash_uva_bin(message)) %256
+
+  #print ('elem=', elem)
+  return elem
+
+def hash_uva_bin (message):
+  '''F,G = (0)^(x1)^(x2)^(x3)^(x1&x3)^(x2&x3)^(x4)^(x1&x4)^(x2&x4)
+  H = (0) ^ (x1) ^ (x2) ^ (x3)
+  I = (0) ^ (x1) ^ (x2) ^ (x1&x2) ^ (x3)
+  '''
+
+  
+  '''F= (message[1] & message[0]) | (~(message[2]) & message[3])
+  G= (F & message[4]) | (message[5] & ~(message[6]))
+  H= (G ^ message[7] ^ message[8])
+  I = (H ^ (message[9] | message[10]))'''
+
+  #PARA PROBAR SIN CONFUSION
+  #F= message[10] ^ message[9] ^ message[8] ^ message[7] ^ message[6] ^ message[5] ^ message[4] ^ message[3] ^ message[2] ^ message[1] ^ message[0]    
+  F = message[7]
+  
+
+  #hash = I % 256
+  resul = F%256
+
+  #return hash
   return resul

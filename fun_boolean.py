@@ -215,7 +215,7 @@ if __name__ == "__main__":
 	if os.path.exists("ristras.log"): #Borramos el log si existe porque el modo de escritura solo reescribe si abres un nuevo shell de python
 		os.remove("ristras.log")
 	logging.basicConfig(filename = "funciones.log", filemode = 'w' ,format = '%(message)s',level = logging.DEBUG)
-	lista_variables = [3]
+	lista_variables = [4]
 	
 	#Para buscar todas
 	'''for i in lista_variables:

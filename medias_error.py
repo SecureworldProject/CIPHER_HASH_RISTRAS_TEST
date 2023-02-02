@@ -140,10 +140,10 @@ def check_ristras_diferentes(lista, dict_ristras, tam):
 
 
 
-def genera_lista_claves():
+def genera_lista_claves(n_claves):
 	'''Esta funcion contiene un generador de claves para ahorra en memoria'''
 	a = []
-	for i in range(10000):
+	for i in range(n_claves):
 		a.append(random.randint(0,(2**64)))
 	return a
 
@@ -215,12 +215,14 @@ if __name__ == "__main__":
 	min_dif = 0
 
 	#cifrado = cifradores.encryp_Nokia_test
-	cifradores = [cifradores.encryp_Nokia_test_hex]#, cifradores.encryp_Uva_bin]
+	cifradores = [cifradores.encryp_Nokia_test_hex, cifradores.encryp_Uva_bin]
+	#cifradores = [cifradores.encryp_Uva_bin]
 	#Lo primero es generar una lista de claves de muchos tipos
-	lista_claves = genera_lista_claves()
-	lista_tams = [2,8]
+	n_claves = 100
+	lista_claves = genera_lista_claves(n_claves)
+	lista_tams = [2,8,26,260]
 	#Itero sobre claves
-	print(f"Para {ficheros_totales} ristras y 10K claves aleatorias")
+	print(f"Para {ficheros_totales} ristras y {n_claves} claves aleatorias")
 	start = time.time()
 	for cifrado in cifradores:
 		print("Para el cifrado: ",cifrado.__name__)
